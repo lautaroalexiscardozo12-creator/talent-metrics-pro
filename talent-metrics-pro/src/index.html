@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="es" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TalentMetrics Pro - Dashboard Premium</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style type="text/tailwindcss">
+      @variant dark (&:where(.dark, .dark *));
+      @layer utilities {
+        *,
+        *::before,
+        *::after {
+          transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
+        }
+      }
+    </style>
+    <style>
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .light ::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 4px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-50 min-h-screen font-sans antialiased"
+  >
+    <div class="flex flex-col min-h-screen">
+      <header
+        class="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 py-3.5 px-6 shadow-xs"
+      >
+        <div
+          class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="p-2 bg-indigo-600 rounded-lg text-white font-black text-lg"
+            >
+              👔
+            </div>
+            <div>
+              <h1
+                class="text-lg font-bold tracking-tight text-slate-900 dark:text-white"
+              >
+                TalentMetrics Pro
+              </h1>
+              <p class="text-xs text-slate-500 dark:text-zinc-400">
+                Panel de Control Conectado a Hoja 1
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              id="theme-toggle"
+              onclick="toggleTheme()"
+              class="p-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800"
+            >
+              <span id="theme-icon-light" class="block">🌙</span>
+              <span id="theme-icon-dark" class="hidden">☀️</span>
+            </button>
+            <button
+              onclick="openModalForCreate()"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer"
+            >
+              ➕ Nuevo Empleado
+            </button>
+            <button
+              id="sync-btn"
+              onclick="fetchDataset()"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3.5 py-2 rounded-lg cursor-pointer"
+            >
+              <span id="sync-spinner" class="inline-block animate-spin hidden"
+                >⏳</span
+              >
+              <span id="sync-text">🔄 Sincronizar</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main
+        class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6"
+      >
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            class="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs"
+          >
+            <span
+              class="text-xs font-medium tracking-wider text-slate-400 uppercase block"
+              >Fuerza Laboral</span
+            >
+            <span
+              id="kpi-total"
+              class="text-2xl font-bold text-slate-900 dark:text-white mt-1 block"
+              >0 activos</span
+            >
+          </div>
+          <div
+            class="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs"
+          >
+            <span
+              class="text-xs font-medium tracking-wider text-slate-400 uppercase block"
+              >Sueldo Promedio</span
+            >
+            <span
+              id="kpi-sueldo"
+              class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1 block"
+              >$0.00</span
+            >
+          </div>
+          <div
+            class="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs"
+          >
+            <span
+              class="text-xs font-medium tracking-wider text-slate-400 uppercase block"
+              >Inversión en Bonos</span
+            >
+            <span
+              id="kpi-plus"
+              class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block"
+              >$0.00</span
+            >
+          </div>
+          <div
+            class="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs"
+          >
+            <span
+              class="text-xs font-medium tracking-wider text-slate-400 uppercase block"
+              >Horas Consolidadas</span
+            >
+            <span
+              id="kpi-horas"
+              class="text-2xl font-bold text-slate-700 dark:text-zinc-300 mt-1 block"
+              >0 hs</span
+            >
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div
+            class="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs h-64 flex flex-col justify-between"
+          >
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+                Distribución por Categorías
+              </h3>
+              <p class="text-xs text-slate-400">
+                Asignación de presupuestos salariales
+              </p>
+            </div>
+            <div class="relative w-full h-44 flex items-center justify-center">
+              <canvas id="chart-categorias"></canvas>
+            </div>
+          </div>
+
+          <div
+            class="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs h-64 flex flex-col justify-between"
+          >
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+                Análisis Operativo Individual
+              </h3>
+              <p class="text-xs text-slate-400">
+                Comparativa: Horas (Barras) vs Bonificaciones (Línea)
+              </p>
+            </div>
+            <div class="relative w-full h-44 flex items-center justify-center">
+              <canvas id="chart-rendimiento"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs p-5"
+        >
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-lg">📊</span>
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+                Recomendaciones & Métricas Avanzadas
+              </h3>
+              <p class="text-xs text-slate-400">
+                Análisis automatizado en tiempo real basado en patrones de la
+                Hoja 1
+              </p>
+            </div>
+          </div>
+          <div
+            id="recommendations-container"
+            class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"
+          ></div>
+        </div>
+
+        <div
+          class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xs overflow-hidden"
+        >
+          <div
+            class="px-5 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50"
+          >
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white">
+              Nómina del Personal
+            </h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr
+                  class="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-semibold tracking-wider text-slate-400 uppercase"
+                >
+                  <th class="py-3 px-5">Colaborador</th>
+                  <th class="py-3 px-5 text-center">Edad</th>
+                  <th class="py-3 px-5 text-center">Horas Trabajadas</th>
+                  <th class="py-3 px-5 text-right">Sueldo Base</th>
+                  <th class="py-3 px-5 text-right">Bono Productividad</th>
+                  <th class="py-3 px-5 text-center">Categoría</th>
+                  <th class="py-3 px-5 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody
+                id="table-body"
+                class="divide-y divide-slate-100 dark:divide-zinc-800 text-xs"
+              ></tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div
+      id="employee-modal"
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4"
+    >
+      <div
+        class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-xl border border-slate-200 dark:border-zinc-800 p-5 space-y-4"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800 pb-2.5"
+        >
+          <h3
+            id="modal-title"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Añadir Nuevo Registro
+          </h3>
+          <button
+            onclick="closeModal()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form
+          id="employee-form"
+          onsubmit="saveEmployee(event)"
+          class="space-y-3 text-xs"
+        >
+          <input type="hidden" id="form-id" />
+          <div>
+            <label
+              class="block font-medium text-slate-500 dark:text-zinc-400 mb-1"
+              >Nombre Completo</label
+            >
+            <input
+              type="text"
+              id="form-empleado"
+              required
+              class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:border-indigo-500"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                class="block font-medium text-slate-500 dark:text-zinc-400 mb-1"
+                >Edad</label
+              >
+              <input
+                type="number"
+                id="form-edad"
+                required
+                class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label
+                class="block font-medium text-slate-500 dark:text-zinc-400 mb-1"
+                >Horas Mensuales</label
+              >
+              <input
+                type="number"
+                id="form-horas"
+                required
+                class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                class="block font-medium text-slate-500 dark:text-zinc-400 mb-1"
+                >Sueldo Base ($)</label
+              >
+              <input
+                type="number"
+                id="form-sueldo"
+                step="0.01"
+                required
+                class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label
+                class="block font-medium text-slate-500 dark:text-zinc-400 mb-1"
+                >Bono ($)</label
+              >
+              <input
+                type="number"
+                id="form-bono"
+                step="0.01"
+                required
+                class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              class="block font-medium text-slate-500 dark:text-zinc-400 mb-1"
+              >Categoría / Escalafón</label
+            >
+            <input
+              type="text"
+              id="form-categoria"
+              placeholder="Ej: Junior+, Senior"
+              class="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:border-indigo-500"
+            />
+          </div>
+          <div
+            class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800"
+          >
+            <button
+              type="button"
+              onclick="closeModal()"
+              class="px-3 py-1.5 font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="form-submit-btn"
+              class="px-3 py-1.5 font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm"
+            >
+              Confirmar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      let globalDataset = [];
+      let chartCtx1 = null;
+      let chartCtx2 = null;
+
+      document.addEventListener("DOMContentLoaded", () => {
+        applySavedTheme();
+        fetchDataset();
+      });
+
+      function fetchDataset() {
+        toggleSyncLoadingState(true);
+        google.script.run
+          .withSuccessHandler(onDataSuccess)
+          .withFailureHandler(() => toggleSyncLoadingState(false))
+          .getDashboardData();
+      }
+
+      function onDataSuccess(data) {
+        toggleSyncLoadingState(false);
+        if (data.error) {
+          alert("⚠️ " + data.error);
+          return;
+        }
+        globalDataset = data;
+        renderMetricsAndTable(globalDataset);
+        generateRecommendations(globalDataset);
+      }
+
+      function renderMetricsAndTable(dataset) {
+        const tbody = document.getElementById("table-body");
+        tbody.innerHTML = "";
+
+        let totalSueldo = 0,
+          totalBono = 0,
+          totalHoras = 0;
+        const categoriasMap = {};
+        const nombres = [],
+          horas = [],
+          plus = [];
+
+        dataset.forEach((row) => {
+          const sVal = Number(row.sueldoBase || 0);
+          const pVal = Number(row.bono || 0);
+          const hVal = Number(row.horas || 0);
+
+          totalSueldo += sVal;
+          totalBono += pVal;
+          totalHoras += hVal;
+
+          const cat = row.categoria || "General";
+          categoriasMap[cat] = (categoriasMap[cat] || 0) + sVal;
+
+          nombres.push(row.empleado);
+          horas.push(hVal);
+          plus.push(pVal);
+
+          const tr = document.createElement("tr");
+          tr.className =
+            "hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors";
+          tr.innerHTML = `
+          <td class="py-2.5 px-5 font-semibold text-slate-800 dark:text-zinc-200">${row.empleado}</td>
+          <td class="py-2.5 px-5 text-center text-slate-500">${row.edad}</td>
+          <td class="py-2.5 px-5 text-center font-medium">${row.horas} hs</td>
+          <td class="py-2.5 px-5 text-right font-mono">$${sVal.toLocaleString()}</td>
+          <td class="py-2.5 px-5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-medium">+$${pVal.toLocaleString()}</td>
+          <td class="py-2.5 px-5 text-center">
+            <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300">${row.categoria}</span>
+          </td>
+          <td class="py-2.5 px-5 text-center">
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="openModalForEdit(${row.id})" class="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">Editar</button>
+              <button onclick="deleteEmployee(${row.id}, '${row.empleado}')" class="text-rose-600 dark:text-rose-400 hover:underline cursor-pointer">Borrar</button>
+            </div>
+          </td>
+        `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("kpi-total").innerText =
+          dataset.length + " activos";
+        document.getElementById("kpi-sueldo").innerText =
+          "$" +
+          (dataset.length > 0
+            ? (totalSueldo / dataset.length).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "0.00");
+        document.getElementById("kpi-plus").innerText =
+          "$" + totalBono.toLocaleString();
+        document.getElementById("kpi-horas").innerText =
+          totalHoras.toLocaleString() + " hs";
+
+        buildCharts(categoriasMap, nombres, horas, plus);
+      }
+
+      function generateRecommendations(dataset) {
+        const container = document.getElementById("recommendations-container");
+        container.innerHTML = "";
+        if (dataset.length === 0) {
+          container.innerHTML = `<div class="col-span-full text-slate-400 p-2 italic rounded-lg text-center">Sin registros.</div>`;
+          return;
+        }
+
+        let alerts = [];
+
+        // Alerta 1: Sobrecarga Horaria (> 175 hs mens.)
+        const quemados = dataset.filter((e) => e.horas > 175);
+        if (quemados.length > 0) {
+          alerts.push({
+            icon: "⚠️ Fatiga Extrema",
+            title: "Alerta de Cansancio",
+            desc: `Detectamos sobrecarga horaria en: ${quemados.map((e) => e.empleado).join(", ")}. Sugerimos redistribuir cargas.`,
+          });
+        }
+
+        // Alerta 2: Líderes de Productividad (Top Bono)
+        const topProductivos = [...dataset]
+          .sort((a, b) => b.bono - a.bono)
+          .slice(0, 1);
+        if (topProductivos.length > 0 && topProductivos[0].bono > 0) {
+          alerts.push({
+            icon: "⭐ Desempeño",
+            title: "Máxima Eficiencia",
+            desc: `${topProductivos[0].empleado} registra el bono más alto este período.`,
+          });
+        }
+
+        // Alerta 3: Anomalía de Salario Bajo con Horas Altas
+        const explotados = dataset.filter(
+          (e) => e.horas >= 160 && e.sueldoBase < 1500000,
+        );
+        if (explotados.length > 0) {
+          alerts.push({
+            icon: "🔍 Auditoría Salarial",
+            title: "Asimetría Detectada",
+            desc: `Revisar relación horas/pago de: ${explotados.map((e) => e.empleado).join(", ")}.`,
+          });
+        }
+
+        if (alerts.length === 0) {
+          alerts.push({
+            icon: "✅ Óptimo",
+            title: "Planilla Uniforme",
+            desc: "No se registran desvíos críticos en los tiempos ni compensaciones.",
+          });
+        }
+
+        alerts.forEach((a) => {
+          const div = document.createElement("div");
+          div.className =
+            "p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 text-slate-700 dark:text-zinc-300";
+          div.innerHTML = `<div class="font-bold text-xs">${a.icon} - ${a.title}</div><div class="mt-1 opacity-80 text-[11px]">${a.desc}</div>`;
+          container.appendChild(div);
+        });
+      }
+
+      function buildCharts(categoriasData, nombres, horas, plus) {
+        const isDark = document.documentElement.classList.contains("dark");
+        const textC = isDark ? "#94a3b8" : "#475569";
+        const gridC = isDark ? "#1f2937" : "#f1f5f9";
+
+        if (chartCtx1) chartCtx1.destroy();
+        if (chartCtx2) chartCtx2.destroy();
+
+        const ctx1 = document
+          .getElementById("chart-categorias")
+          .getContext("2d");
+        chartCtx1 = new Chart(ctx1, {
+          type: "doughnut",
+          data: {
+            labels: Object.keys(categoriasData),
+            datasets: [
+              {
+                data: Object.values(categoriasData),
+                backgroundColor: [
+                  "#4f46e5",
+                  "#10b981",
+                  "#f59e0b",
+                  "#3b82f6",
+                  "#ec4899",
+                ],
+                borderWidth: isDark ? 2 : 1,
+                borderColor: isDark ? "#18181b" : "#ffffff",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "right",
+                labels: { color: textC, font: { size: 10 } },
+              },
+            },
+          },
+        });
+
+        const ctx2 = document
+          .getElementById("chart-rendimiento")
+          .getContext("2d");
+        chartCtx2 = new Chart(ctx2, {
+          type: "bar",
+          data: {
+            labels: nombres,
+            datasets: [
+              {
+                label: "Horas Trabajadas",
+                data: horas,
+                backgroundColor: "rgba(99, 102, 241, 0.8)",
+                yAxisID: "yH",
+                borderRadius: 4,
+              },
+              {
+                label: "Bono ($)",
+                data: plus,
+                type: "line",
+                borderColor: "#10b981",
+                borderWidth: 2,
+                pointRadius: 3,
+                yAxisID: "yB",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { color: textC, font: { size: 9 } },
+              },
+              yH: {
+                type: "linear",
+                position: "left",
+                grid: { color: gridC },
+                ticks: { color: textC },
+              },
+              yB: {
+                type: "linear",
+                position: "right",
+                grid: { display: false },
+                ticks: { color: textC },
+              },
+            },
+            plugins: {
+              legend: {
+                position: "top",
+                labels: { color: textC, font: { size: 10 } },
+              },
+            },
+          },
+        });
+      }
+
+      function deleteEmployee(id, nombre) {
+        if (confirm(`¿Estás seguro de eliminar a ${nombre}?`)) {
+          google.script.run
+            .withSuccessHandler(() => fetchDataset())
+            .deleteEmployeeFromSheet(id);
+        }
+      }
+
+      function openModalForCreate() {
+        document.getElementById("employee-form").reset();
+        document.getElementById("form-id").value = "";
+        document.getElementById("modal-title").innerText =
+          "Añadir Nuevo Empleado";
+        document.getElementById("employee-modal").classList.remove("hidden");
+      }
+
+      function openModalForEdit(id) {
+        const emp = globalDataset.find((item) => item.id === id);
+        if (!emp) return;
+        document.getElementById("form-id").value = emp.id;
+        document.getElementById("form-empleado").value = emp.empleado;
+        document.getElementById("form-edad").value = emp.edad;
+        document.getElementById("form-horas").value = emp.horas;
+        document.getElementById("form-sueldo").value = emp.sueldoBase;
+        document.getElementById("form-bono").value = emp.bono;
+        document.getElementById("form-categoria").value = emp.categoria;
+        document.getElementById("modal-title").innerText = "Modificar Datos";
+        document.getElementById("employee-modal").classList.remove("hidden");
+      }
+
+      function closeModal() {
+        document.getElementById("employee-modal").classList.add("hidden");
+      }
+
+      function saveEmployee(event) {
+        event.preventDefault();
+        const formId = document.getElementById("form-id").value;
+        const employeeData = {
+          id: formId ? Number(formId) : null,
+          empleado: document.getElementById("form-empleado").value,
+          edad: Number(document.getElementById("form-edad").value),
+          horas: Number(document.getElementById("form-horas").value),
+          sueldoBase: parseFloat(document.getElementById("form-sueldo").value),
+          bono: parseFloat(document.getElementById("form-bono").value),
+          categoria: document.getElementById("form-categoria").value,
+        };
+        const target = formId ? "updateEmployeeInSheet" : "addEmployeeToSheet";
+        google.script.run
+          .withSuccessHandler(() => {
+            closeModal();
+            fetchDataset();
+          })
+          [target](employeeData);
+      }
+
+      function toggleTheme() {
+        const h = document.documentElement;
+        if (h.classList.contains("dark")) {
+          h.classList.replace("dark", "light");
+          localStorage.setItem("themePref", "light");
+        } else {
+          h.classList.replace("light", "dark");
+          localStorage.setItem("themePref", "dark");
+        }
+        applySavedTheme();
+        if (globalDataset.length > 0) renderMetricsAndTable(globalDataset);
+      }
+
+      function applySavedTheme() {
+        const isDark = localStorage.getItem("themePref") === "dark";
+        const h = document.documentElement;
+        if (isDark) {
+          h.classList.add("dark");
+          document.getElementById("theme-icon-light").classList.add("hidden");
+          document.getElementById("theme-icon-dark").classList.remove("hidden");
+        } else {
+          h.classList.remove("dark");
+          document
+            .getElementById("theme-icon-light")
+            .classList.remove("hidden");
+          document.getElementById("theme-icon-dark").classList.add("hidden");
+        }
+      }
+
+      function toggleSyncLoadingState(isL) {
+        const s = document.getElementById("sync-spinner"),
+          t = document.getElementById("sync-text"),
+          b = document.getElementById("sync-btn");
+        if (isL) {
+          s.classList.remove("hidden");
+          t.innerText = " Procesando...";
+          b.disabled = true;
+        } else {
+          s.classList.add("hidden");
+          t.innerText = "🔄 Sincronizar";
+          b.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>
